@@ -1,0 +1,8 @@
+Metadata-Version: 1.0
+Name: drats_wx
+Version: 0.0.0.dev0
+Summary: Drats client using WxPython
+Home-page: https://groups.io/g/d-rats
+Author: Dan Smith KK7DS, Maurizio Andreotti IZ2LXI, John E. Malmberg WB8TYW
+License: GPL-3.0-only
+Description: Drats client using WxPython

@@ -897,3 +897,51 @@ A system can have multiple ratflectors on it.
      - Is repeater manually started or a service?
 
 May only be able to fully support repeaters as a service on Linux systems.
+
+
+agwpe interface:
+https://pypi.org/project/pyham_pe/
+
+https://www.soundcardpacket.org/
+
+https://www.ax25.net/kiss.aspx
+
+https://en.wikipedia.org/wiki/Amateur_radio_call_signs
+
+https://files.tapr.org/tech_docs/AX25/AX25.2.2.pdf
+
+
+Now getting guidance from Google AI on proper setup of monorepo
+
+Directory structure:
+
+libs/ -all libraries
+apps/ -all programs that get launched
+
+libs/drats-common/src D-Rats libraries common to drats no GUI
+apps/drats-cli/src - depends on d-rats-common
+apps/drats-gui-kivy/src - depends on kivy and drats-common
+
+drats2/ (Repository Root)
+├── apps/
+│   ├── drats_gtk/     # Legacy / Desktop UI
+│   ├── drats_kivy/    # Mobile / Touch UI
+│   ├── drats_text/    # Headless / Terminal UI (Great for Pi Zeros!)
+│   ├── drats_tk/      # Alternative UI
+│   ├── drats_wx/      # Alternative UI
+│   └── repeater/      # Standalone Network Utility
+└── libs/
+    └── drats_common/  # Your Core Engines & Protocols (All your routines)
+
+--- [ ARCHITECTURAL DECISIONS ] ---
+* Hardware Abstraction Recommendation: Discourage direct PC audio connections
+  on Windows.
+  Promote using a Pi Zero 2 W as a dedicated, low-cost network appliance
+  executing the core headless Python loop and Direwolf modem. Windows users
+  interact securely via a network-bridged web browser.
+
+--- [ FUTURE IMPROVEMENTS & TODOs ] ---
+* [ ] Optimize the http.server listen parameters to support secure '0.0.0.0'
+      local network hosting.
+* [ ] Package a simple Linux bootstrap shell script to instantly turn a fresh
+      Pi OS Lite image into a headless D-Rats 2 radio appliance.

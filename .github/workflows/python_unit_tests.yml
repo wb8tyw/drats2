@@ -1,0 +1,44 @@
+---
+name: Test core installation and run tests
+
+# Always run on Pull Requests
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout from repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures git tags are pulled for version_git
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Base Dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Run Core Module Tests (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          PYTHONPATH: libs/drats_common/src:libs/version_git/src
+        run: |
+          python3 -m version_git.version_git
+
+      - name: Run Core Module Tests (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          $env:PYTHONPATH = "libs\drats_common\src;libs\version_git\src"
+          python -m version_git.version_git

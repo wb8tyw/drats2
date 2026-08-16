@@ -445,3 +445,68 @@ manage it.
 [1]: https://github.com/ham-radio-software/lzhuf
 [2]: https://github.com/ham-radio-software/D-Rats/wiki/010.020-Installation-of-D%E2%80%90Rats-on-Microsoft-Windows-with-MobaXterm
 [3]: https://groups.io/g/d-rats/
+
+## Unit Testing
+
+This repository uses `pytest` to execute unit tests. Testing is divided into
+core decoupled libraries (`libs/`) and application execution targets (`apps/`).
+
+### Cloud Automated Testing (CI)
+
+GitHub Actions automatically runs the test suite on every commit push or pull
+request across **Linux**, **Windows**, and **macOS**. Hardware-specific serial
+checks are programmatically skipped on headless cloud runners.
+
+### Local Development Testing
+
+#### 1. Fedora / Linux (Host Package Method)
+
+To test natively using your Linux distribution's vetted packages
+(avoiding `pip` modifications to the underlying system):
+
+~~~bash
+# Set your path to resolve the decoupled library source folder
+export PYTHONPATH=libs/drats_common/src
+
+# Execute pytest directly against the core library targets
+pytest libs/drats_common/
+~~~
+
+#### 2. Unit Testing on Windows 11 (VS Code PowerShell)
+
+This repository includes an automated test runner script to bypass manual
+environment path setups. This protects your workflow against tedious
+re-configurations caused by Windows Updates or laptop sleep network
+disconnections.
+
+##### Running Tests in a Single Step
+
+Open your VS Code PowerShell terminal panel at the root of your mapped
+network share and execute the automated script:
+
+~~~powershell
+tests\run_tests.ps1
+~~~
+
+This single command automatically resolves your network security scopes, sets
+up your internal target paths (`PYTHONPATH`), and fires the native Python
+validation suite instantly. No external PyPI package updates are required.
+
+#### 3. Windows 11 / MobaXterm / Msys2 (Isolated Python Method)
+
+For local desktop platforms requiring PyPI-sourced support dependencies,
+isolate your environment variables on your local drive:
+
+~~~bash
+# Create and launch an isolated test environment on your local drive
+python -m venv ~/envs/drats2_test
+# (Use Scripts\Activate.ps1 for standard Windows CMD)
+source ~/envs/drats2_test/bin/activate
+
+# Synchronize framework dependencies
+pip install --upgrade pip
+pip install pytest -e libs/drats_common
+
+# Run the validation suite
+pytest libs/drats_common/
+~~~

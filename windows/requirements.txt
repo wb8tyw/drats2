@@ -1,5 +1,7 @@
 # common and Tkinter
 pip
+pyserial
+pyyaml
 # kivy variant
 kivy
 # wxPython variant

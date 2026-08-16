@@ -1,4 +1,4 @@
-# File: common_args.py
+# File: drats_common/common_args.py
 
 '''
 Common Command Argument processing.
@@ -8,6 +8,7 @@ Most D-Rats programs take a common set of command line arguments.
 
 import argparse
 import logging
+
 
 class CommonArgs():
     '''
@@ -41,11 +42,6 @@ class CommonArgs():
         def __init__(self, option_strings, dest, nargs=None, **kwargs):
             if nargs is not None:
                 raise ValueError("nargs is not allowed")
-            if '_' in globals():
-                print("common_args Found _ in globals")
-            if '_' in locals():
-                print("common_args Found _ in locals")
-
             argparse.Action.__init__(self, option_strings, dest, **kwargs)
 
         def __call__(self, _parser, namespace, values, _option_strings=None):
@@ -99,7 +95,9 @@ class CommonArgs():
     @property
     def args(self):
         '''
-        :returns: '''
+        :returns: Parsed Arguments
+        :rtype: :class:`argparse.Namespace`
+        '''
         if not self._args:
             self._args = self._parser.parse_args()
         return self._args
@@ -108,6 +106,12 @@ class CommonArgs():
         '''
         add_argument
 
-        Add an argument to the parser via :class:`argparse.ArgumentParser`
+        A wrapper for :class:`argparse.ArgumentParser`
         '''
         self._parser.add_argument(*args, **kwargs)
+
+    def print_help(self):
+        '''
+        Print help text.
+        '''
+        self._parser.print_help()

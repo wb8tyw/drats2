@@ -1,66 +1,88 @@
 #!/bin/bash
+# install_fedora.sh -> Called by dispatcher, defaults to prod.
 
-set -uex
+MODE="${1:-prod}"
+SHORT_HOST=$(hostname -s | tr '[:upper:]' '[:lower:]')
 
-my_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+echo "[INSTALL] Running Complete Fedora setup for host: [${SHORT_HOST}]"
 
-sudo dnf -y install \
-    aspell aspell-de aspell-en aspell-es aspell-it aspell-nl \
-    ca-certificates \
-    gedit \
-    libxml2 \
-    python3 \
-    python3-cairo \
-    python3-feedparser \
-    python3-flask \
-    python3-geopy \
-    python3-gevent \
-    python3-gobject \
-    python3-greenlet \
-    python3-libxml2 \
-    python3-pillow \
-    python3-pyaudio \
-    python3-pycountry \
-    python3-pyserial \
-    python3-wxpython4
+# Establish repo base directory cleanly
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEV_LIBS="${REPO_ROOT}/local/${SHORT_HOST}/libs"
+DEV_HOME="${REPO_ROOT}/local/${SHORT_HOST}/home"
+mkdir -p "${DEV_LIBS}" "${DEV_HOME}"
 
-pypi_dir=~/drats_support/local/lib/pypi
-mkdir -p "$pypi_dir"
+# 1. Fallback wrapper only if 'sudo' is physically missing from the container
+SUDO_CMD="sudo"
+if ! command -v sudo &> /dev/null; then
+    SUDO_CMD=""
+fi
 
-if [ -e "$pypi_dir/bin/pip3" ]; then
-  echo 'Pip already updated'
+# 2. Complete System Infrastructure Packages (RPMs)
+SYSTEM_RPM=(
+    "python3-requests"
+    "python3-sphinx"
+    "python3-docutils"
+    "python3-pyserial"
+    "python3-geopy"
+    "python3-lxml"
+    "python3-feedparser"
+    "python3-pillow"
+    "python3-cairo"
+    "python3-gobject"
+    "python3-pip"
+    "python3-devel"
+    "gcc"
+    "SDL2-devel"
+    "SDL2_image-devel"
+    "SDL2_mixer-devel"
+    "SDL2_ttf-devel"
+    "gstreamer1-devel"
+    "gstreamer1-plugins-base-devel"
+    "libjpeg-turbo-devel"
+    "zlib-devel"
+)
+
+# kivy needs these packages:
+SYSTEM_RPM+=(
+  "python3-certifi"
+  "python3-docutils"
+  "python3-filetype"
+  "python3-idna"
+  "python3-pygments"
+  "python3-requests"
+  "python3-sphinx"
+  "python3-urllib3"
+)
+
+# 3. Append Developer-only requirements if requested
+if [ "${MODE}" = "dev" ]; then
+    echo "[MODE] Pipeline validation: Adding testing and lint frameworks..."
+    SYSTEM_RPM+=(
+        "python3-pytest"
+        "python3-black"
+        "git"
+        "pre-commit"
+    )
+fi
+
+# 4. Secure Core Distribution Installation (Safe from missing-sudo crashes)
+echo "[DNF] Deploying signed system distribution assets..."
+if ! ${SUDO_CMD} dnf install -y "${SYSTEM_RPM[@]}"; then
+    echo "[CRITICAL] Distribution package install failed. Halting for safety."
+    exit 1
+fi
+
+# 5. Target-Isolated PyPI Block (Reads external file exclusively)
+REQ_FILE="${REPO_ROOT}/fedora/requirements.txt"
+if [ -f "$REQ_FILE" ]; then
+    echo "[PIP] Installing isolated targets from ${REQ_FILE}..."
+    pip install \
+        --target="${DEV_LIBS}" \
+        --upgrade \
+        -r "$REQ_FILE"
 else
-  # Pip always complains if a newer version is available until
-  # you upgrade to it.
-  echo "upgrading pip, this will warn that pip needs upgrading"
-  pip3 install --upgrade --target="$pypi_dir" pip
-  ls "$pypi_dir/bin"
+    echo "[WARNING] Fedora requirements file not found at ${REQ_FILE}"
 fi
-# Need to set PYTHONPATH to use the PyPi packages
-PYTHONPATH="$pypi_dir"
-export PYTHONPATH
-ls "$pypi_dir/bin"
-# If we do not include pip here, for some reason pip removes the
-# binary for it.  Why???
-"$pypi_dir/bin"/pip3 install --upgrade --target="$pypi_dir" \
-  -r "${my_dir}/fedora/requirements.txt"
 
-if [[ "${1:-}" == dev* ]]; then
-  sudo dnf -y install \
-    bandit \
-    codespell \
-    gcc \
-    make \
-    pkgconf-pkg-config \
-    pylint \
-    python3-babel \
-    python3-devel \
-    python3-ipykernel \
-    python3-pip \
-    python3-simplejson \
-    python3-sphinx \
-    python3-tkinter \
-    python3-virtualenv \
-    shellcheck \
-    yamllint
-fi
+echo "[SUCCESS] Secure Fedora environment verification completed."
